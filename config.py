@@ -5,12 +5,13 @@ from ccxt import exchanges
 # This script loads the ini file specified and checks if all options are set and of the right type and
 # makes logical sense. It also outputs a nice config class that is easier to work with
 
+
 class Exchange:
     def __init__(self, name, key, secret):
         self.name = name
         if self.name not in exchanges:
             raise
-        
+
         self.key = key
         if self.key == '':
             raise
@@ -18,6 +19,7 @@ class Exchange:
         self.secret = secret
         if self.secret == '':
             raise
+
 
 class Stop:
     def __init__(self, low, high, close):
@@ -30,6 +32,7 @@ class Stop:
             raise
 
         self.close = close
+
 
 class Start:
     def __init__(self, low, high, amount, order):
@@ -49,7 +52,7 @@ class Start:
             raise
 
         self.order = order
-        if self.order not in {'buy','sell'}:
+        if self.order not in {'buy', 'sell'}:
             raise
 
 
@@ -58,17 +61,18 @@ class Bounds:
         self.high = Decimal(high)
         if self.high < 0:
             raise
-        
+
         self.low = Decimal(low)
         if self.low < 0:
             raise
 
-        self.step = Decimal(low)
+        self.step = Decimal(step)
         if self.step <= 0:
             raise
 
+
 class Orders:
-    def __init__(self, above , below):
+    def __init__(self, above, below, size):
         self.above = int(above)
         if self.above < 1:
             raise
@@ -77,33 +81,39 @@ class Orders:
         if self.below < 1:
             raise
 
+        self.size = Decimal(size)
+        if self.size <= 0:
+            raise
+
+
 class Type:
     def __init__(self, above, below, leverage, market):
         self.above = above
-        if self.above not in {'buy','sell'}:
+        if self.above not in {'buy', 'sell'}:
             raise
 
         self.below = below
-        if self.below not in {'buy','sell'}:
+        if self.below not in {'buy', 'sell'}:
             raise
 
         self.leverage = int(leverage)
         if self.leverage < 1:
             raise
-        
+
         self.market = market
 
+
 class Config:
-     def __init__(
-        self, 
-        orderAbove ,orderBelow, 
-        typeAbove, typeBelow, typeLeverage, typeMarket, 
+    def __init__(
+        self,
+        orderAbove, orderBelow, orderSize,
+        typeAbove, typeBelow, typeLeverage, typeMarket,
         boundsHigh, boundsLow, boundsStep,
         startLow, startHigh, startAmount, startOrder,
         stopLow, stopHigh, stopClose,
         exchangeName, exchangeKey, exchangeSecret,
-        ):
-        self.orders = Orders(orderAbove ,orderBelow)
+    ):
+        self.orders = Orders(orderAbove, orderBelow, orderSize)
         self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
         self.start = Start(startLow, startHigh, startAmount, startOrder)
@@ -118,6 +128,7 @@ def loadConfig(configFile):
     return Config(
         config['orders']['above'],
         config['orders']['below'],
+        config['orders']['size'],
         config['type']['above'],
         config['type']['below'],
         config['type']['leverage'],
@@ -134,5 +145,5 @@ def loadConfig(configFile):
         config['stop'].getboolean('close'),
         config['exchange']['name'],
         config['exchange']['key'],
-        config['exchange']['secret'],    
+        config['exchange']['secret'],
     )
