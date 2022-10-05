@@ -1,3 +1,9 @@
-import strategy
+import sys
+from config import loadConfig
+import pprint
 
-print(strategy.LOW_PRICE - strategy.HIGH_PRICE / (strategy.GRID_COUNT - 1))
+def main():
+    CONFIG = loadConfig(sys.argv[1])
+
+if __name__ == "__main__":
+    main()
