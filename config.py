@@ -1,8 +1,23 @@
 from configparser import ConfigParser
 from decimal import Decimal
+from ccxt import exchanges
 
 # This script loads the ini file specified and checks if all options are set and of the right type and
 # makes logical sense. It also outputs a nice config class that is easier to work with
+
+class Exchange:
+    def __init__(self, name, key, secret):
+        self.name = name
+        if self.name not in exchanges:
+            raise
+        
+        self.key = key
+        if self.key == '':
+            raise
+
+        self.secret = secret
+        if self.secret == '':
+            raise
 
 class Stop:
     def __init__(self, low, high, close):
@@ -86,13 +101,14 @@ class Config:
         boundsHigh, boundsLow, boundsStep,
         startLow, startHigh, startAmount, startOrder,
         stopLow, stopHigh, stopClose,
+        exchangeName, exchangeKey, exchangeSecret,
         ):
         self.orders = Orders(orderAbove ,orderBelow)
         self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
         self.start = Start(startLow, startHigh, startAmount, startOrder)
         self.stop = Stop(stopLow, stopHigh, stopClose)
-    
+        self.exchange = Exchange(exchangeName, exchangeKey, exchangeSecret)
 
 
 def loadConfig(configFile):
@@ -116,4 +132,7 @@ def loadConfig(configFile):
         config['stop']['low'],
         config['stop']['high'],
         config['stop'].getboolean('close'),
+        config['exchange']['name'],
+        config['exchange']['key'],
+        config['exchange']['secret'],    
     )
