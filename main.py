@@ -7,6 +7,7 @@ from utils import log
 
 
 def main():
+
     log('Loading strategy')
     CONFIG = loadConfig(sys.argv[1])
 
@@ -78,9 +79,11 @@ def main():
                             xchange.cancel_order(grid[gridList[newIndex]])
                             grid[gridList[newIndex]] = None
 
+                        numOrders += 1
+
                     # Check or place new above and remove any not needed
                     numOrders = 1
-                    for newIndex in range(gridIndex + 1, len(gridList) + 1):
+                    for newIndex in range(gridIndex + 1, len(gridList)):
                         if grid[gridList[newIndex]] is None and numOrders <= CONFIG.orders.above:
                             log(f'Placing {CONFIG.type.above} order at price {gridList[newIndex]} above')
                             if CONFIG.type.above == 'buy':
@@ -91,6 +94,8 @@ def main():
                         if numOrders > CONFIG.orders.above and grid[gridList[newIndex]] is not None:
                             xchange.cancel_order(grid[gridList[newIndex]])
                             grid[gridList[newIndex]] = None
+
+                        numOrders += 1
 
         price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
     log("Exiting main loop let's find out why.")
