@@ -1,5 +1,7 @@
 from configparser import ConfigParser
 from decimal import Decimal
+from os import environ
+
 from ccxt import exchanges
 
 # This script loads the ini file specified and checks if all options are set and of the right type and
@@ -35,7 +37,7 @@ class Stop:
 
 
 class Start:
-    def __init__(self, low, high, amount, order):
+    def __init__(self, low, high, amount, order, location):
         self.low = Decimal(low)
         if self.low < 0:
             raise
@@ -53,6 +55,10 @@ class Start:
 
         self.order = order
         if self.order not in {'buy', 'sell'}:
+            raise
+
+        self.location = location
+        if self.location not in {'above', 'below'}:
             raise
 
 
@@ -109,14 +115,14 @@ class Config:
         orderAbove, orderBelow, orderSize,
         typeAbove, typeBelow, typeLeverage, typeMarket,
         boundsHigh, boundsLow, boundsStep,
-        startLow, startHigh, startAmount, startOrder,
+        startLow, startHigh, startAmount, startOrder, startLocation,
         stopLow, stopHigh, stopClose,
         exchangeName, exchangeKey, exchangeSecret,
     ):
         self.orders = Orders(orderAbove, orderBelow, orderSize)
         self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
-        self.start = Start(startLow, startHigh, startAmount, startOrder)
+        self.start = Start(startLow, startHigh, startAmount, startOrder, startLocation)
         self.stop = Stop(stopLow, stopHigh, stopClose)
         self.exchange = Exchange(exchangeName, exchangeKey, exchangeSecret)
 
@@ -140,10 +146,11 @@ def loadConfig(configFile):
         config['start']['high'],
         config['start']['amount'],
         config['start']['order'],
+        config['start']['location'],
         config['stop']['low'],
         config['stop']['high'],
         config['stop'].getboolean('close'),
         config['exchange']['name'],
-        config['exchange']['key'],
-        config['exchange']['secret'],
+        environ['apiKey'],
+        environ['secret'],
     )

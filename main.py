@@ -16,48 +16,84 @@ def main():
         'secret': CONFIG.exchange.secret,
     })
 
-    log('Fetching ticker')
+    log('Fetching ticker.')
     price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
 
     # Wait for start trigger
-    log(f'Base price is {price}. Waiting for start trigger...')
+    log(f'Base price is {price}. Waiting for start price.')
     while price > CONFIG.start.low and price < CONFIG.start.high:
         price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
 
-    log(f'Trigger hit. Price is {price}')
+    log('Building grid and placing first order.')
+    log(f'Start price hit at {price}')
+    grid = {}
+    gridPrice = CONFIG.bounds.low
+    gridList = [gridPrice]
+    while gridPrice <= CONFIG.bounds.high:
+        grid[gridPrice] = None
+        priceDiff = gridPrice - price
+        if abs(priceDiff) < CONFIG.bounds.step:
+            if priceDiff > 0 and CONFIG.start.location == 'above':
+                # gridPrice is above current price. Place above order
+                log(f'Placing start {CONFIG.start.order} order at {gridPrice} {CONFIG.start.location} {price}')
+                if CONFIG.start.order == 'buy':
+                    grid[gridPrice] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
+                if CONFIG.start.order == 'sell':
+                    grid[gridPrice] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
 
-    log('Placing startup order')
-    # Executing initial order
+            if priceDiff < 0 and CONFIG.start.location == 'below':
+                # gridPrice is below current price place below order
+                log(f'Placing start {CONFIG.start.order} order at {gridPrice} {CONFIG.start.location} {price}')
+                if CONFIG.start.order == 'buy':
+                    grid[gridPrice] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
+                if CONFIG.start.order == 'sell':
+                    grid[gridPrice] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
 
-    log('Creating initial orders')
-    # Place initial grid orders
-    grid = CONFIG.bounds.low
-    orders = 0
-    while grid <= CONFIG.bounds.high and orders < CONFIG.orders.above:
-        if grid > price:
-            if CONFIG.type.above == 'sell':
-                log(f'Creating sell order at {grid} above start price')
-                xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.orders.size, grid)
-                orders += 1
-            if CONFIG.type.above == 'buy':
-                log(f'Creating buy order at {grid} above start price')
-                xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.orders.size, grid)
-                orders += 1
-        grid += CONFIG.bounds.step
+        gridList += [gridPrice]
+        gridPrice += CONFIG.bounds.step
 
-    grid = CONFIG.bounds.high
-    orders = 0
-    while grid >= CONFIG.bounds.low and orders < CONFIG.orders.below:
-        if grid < price:
-            if CONFIG.type.below == 'sell':
-                log(f'Creating sell order at {grid} below start price')
-                xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.orders.size, grid)
-                orders += 1
-            if CONFIG.type.below == 'buy':
-                log(f'Creating buy order at {grid} below start price')
-                xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.orders.size, grid)
-                orders += 1
-        grid -= CONFIG.bounds.step
+    # Main loop
+    price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
+    log('Starting main loop.')
+    while price > CONFIG.stop.low and price < CONFIG.stop.high:
+        for gridIndex in range(0, len(gridList)):
+            if grid[gridList[gridIndex]] is not None:
+                # Check if order is still alive
+                if xchange.fetch_order(grid[gridList[gridIndex]])['status'] == 'closed':
+                    # Order has been closed. Mark as closed
+                    log(f'Order at {gridList[gridIndex]} filled.')
+                    grid[gridList[gridIndex]] = None
+
+                    # Check or place new orders below and remove any not needed
+                    numOrders = 1
+                    for newIndex in reversed(range(0, gridIndex)):
+                        if grid[gridList[newIndex]] is None and numOrders <= CONFIG.orders.below:
+                            log(f'Placing {CONFIG.type.below} order at price {gridList[newIndex]} below')
+                            if CONFIG.type.below == 'buy':
+                                grid[gridList[newIndex]] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.orders.size, gridList[newIndex])['id']
+                            if CONFIG.type.below == 'sell':
+                                grid[gridList[newIndex]] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.orders.size, gridList[newIndex])['id']
+
+                        if numOrders > CONFIG.orders.below and grid[gridList[newIndex]] is not None:
+                            xchange.cancel_order(grid[gridList[newIndex]])
+                            grid[gridList[newIndex]] = None
+
+                    # Check or place new above and remove any not needed
+                    numOrders = 1
+                    for newIndex in range(gridIndex + 1, len(gridList) + 1):
+                        if grid[gridList[newIndex]] is None and numOrders <= CONFIG.orders.above:
+                            log(f'Placing {CONFIG.type.above} order at price {gridList[newIndex]} above')
+                            if CONFIG.type.above == 'buy':
+                                grid[gridList[newIndex]] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.orders.size, gridList[newIndex])['id']
+                            if CONFIG.type.above == 'sell':
+                                grid[gridList[newIndex]] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.orders.size, gridList[newIndex])['id']
+
+                        if numOrders > CONFIG.orders.above and grid[gridList[newIndex]] is not None:
+                            xchange.cancel_order(grid[gridList[newIndex]])
+                            grid[gridList[newIndex]] = None
+
+        price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
+    log("Exiting main loop let's find out why.")
 
 
 if __name__ == "__main__":
