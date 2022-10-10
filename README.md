@@ -11,3 +11,10 @@ Let's get the usual out of the way...
 
 ***DISCLAIMER
 This software is for educational purposes only. Do not risk money which you are afraid to lose. USE THE SOFTWARE AT YOUR OWN RISK. THE AUTHORS AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESULTS.***
+
+To run type
+
+`python main.py sample_strategy.ini`
+
+sample_strategy as it reads is a sample strategy that will run on FTX. You can use this as a base to
+design your own grid strategy and I recommend you read through it thoroughly.

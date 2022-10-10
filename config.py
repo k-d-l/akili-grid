@@ -8,7 +8,7 @@ from ccxt import exchanges
 # This script loads the ini file specified and checks if all options are set and of the right type and
 # makes logical sense. It also outputs a nice config class that is easier to work with
 
-
+#TODO: Replace all raise with decent messages (possibly multi language capable)
 class Exchange:
     def __init__(self, name, key, secret):
         self.name = name
@@ -25,7 +25,7 @@ class Exchange:
 
 
 class Stop:
-    def __init__(self, low, high, close):
+    def __init__(self, low, high, close, time):
         self.low = Decimal(low)
         if self.low < 0:
             raise
@@ -35,6 +35,10 @@ class Stop:
             raise
 
         self.close = close
+
+        self.time = int(time)
+        if self.time < 0:
+            raise
 
 
 class Start:
@@ -117,14 +121,14 @@ class Config:
         typeAbove, typeBelow, typeLeverage, typeMarket,
         boundsHigh, boundsLow, boundsStep,
         startLow, startHigh, startAmount, startOrder, startLocation,
-        stopLow, stopHigh, stopClose,
+        stopLow, stopHigh, stopClose, stopTime,
         exchangeName, exchangeKey, exchangeSecret,
     ):
         self.orders = Orders(orderAbove, orderBelow, orderSize)
         self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
         self.start = Start(startLow, startHigh, startAmount, startOrder, startLocation)
-        self.stop = Stop(stopLow, stopHigh, stopClose)
+        self.stop = Stop(stopLow, stopHigh, stopClose, stopTime)
         self.exchange = Exchange(exchangeName, exchangeKey, exchangeSecret)
 
 
@@ -152,6 +156,7 @@ def loadConfig(configFile):
         config['stop']['low'],
         config['stop']['high'],
         config['stop'].getboolean('close'),
+        config['stop']['time'],
         config['exchange']['name'],
         environ['apiKey'],
         environ['secret'],

@@ -1,5 +1,6 @@
 import sys
 import ccxt
+import datetime
 from decimal import Decimal
 
 from config import loadConfig
@@ -8,6 +9,8 @@ from utils import log
 
 def main():
 
+    startTime = datetime.datetime.now()
+    log(f'Start time {startTime.isoformat()}')
     log('Loading strategy')
     CONFIG = loadConfig(sys.argv[1])
 
@@ -56,7 +59,17 @@ def main():
     # Main loop
     price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
     log('Starting main loop.')
-    while price > CONFIG.stop.low and price < CONFIG.stop.high:
+    # I use while true and several separate exit conditions because the boolean logic
+    # becomes a headache: There are too many exit conditions to concot one massive while clause        
+    while True: 
+
+        # EXIT Conditions
+        if price < CONFIG.stop.low or price > CONFIG.stop.high:
+            break
+
+        if (datetime.datetime.now() - startTime).total_seconds() > CONFIG.stop.time:
+            break
+
         for gridIndex in range(0, len(gridList)):
             if grid[gridList[gridIndex]] is not None:
                 # Check if order is still alive
@@ -99,7 +112,7 @@ def main():
 
         price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
     log("Exiting main loop let's find out why.")
-
+    #TODO: Finish the app 😁
 
 if __name__ == "__main__":
     log('Script start.')
