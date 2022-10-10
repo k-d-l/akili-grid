@@ -18,3 +18,11 @@ To run type
 
 sample_strategy as it reads is a sample strategy that will run on FTX. You can use this as a base to
 design your own grid strategy and I recommend you read through it thoroughly.
+
+The bot can actually run. To install
+1. Clone the repo
+2. Install the dependencies 
+`pip install -r requirements.txt`
+3. Create the environment variables (see the sample_config.ini)
+4. CREATE YOUR OWN STRATEGY
+5. Run as above
