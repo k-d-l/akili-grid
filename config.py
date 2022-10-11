@@ -9,6 +9,12 @@ from ccxt import exchanges
 # makes logical sense. It also outputs a nice config class that is easier to work with
 
 #TODO: Replace all raise with decent messages (possibly multi language capable)
+
+class Telegram:
+    def __init__(self, bottoken, chatid):
+        self.bottoken = bottoken
+        self.chatid = chatid
+
 class Exchange:
     def __init__(self, name, key, secret):
         self.name = name
@@ -98,7 +104,7 @@ class Orders:
 
 
 class Type:
-    def __init__(self, above, below, leverage, market):
+    def __init__(self, above, below, leverage, market, name):
         self.above = above
         if self.above not in {'buy', 'sell'}:
             raise
@@ -112,24 +118,32 @@ class Type:
             raise
 
         self.market = market
+        if market == '':
+            raise
+
+        self.name = name
+        if name == '':
+            raise
 
 
 class Config:
     def __init__(
         self,
         orderAbove, orderBelow, orderSize,
-        typeAbove, typeBelow, typeLeverage, typeMarket,
+        typeAbove, typeBelow, typeLeverage, typeMarket, typeName,
         boundsHigh, boundsLow, boundsStep,
         startLow, startHigh, startAmount, startOrder, startLocation,
         stopLow, stopHigh, stopClose, stopTime,
         exchangeName, exchangeKey, exchangeSecret,
+        telegramBotToken, telegramChatID,
     ):
         self.orders = Orders(orderAbove, orderBelow, orderSize)
-        self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket)
+        self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket, typeName)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
         self.start = Start(startLow, startHigh, startAmount, startOrder, startLocation)
         self.stop = Stop(stopLow, stopHigh, stopClose, stopTime)
         self.exchange = Exchange(exchangeName, exchangeKey, exchangeSecret)
+        self.telegram = Telegram(telegramBotToken, telegramChatID)
 
 
 def loadConfig(configFile):
@@ -145,6 +159,7 @@ def loadConfig(configFile):
         config['type']['below'],
         config['type']['leverage'],
         config['type']['market'],
+        config['type']['name'],
         config['bounds']['high'],
         config['bounds']['low'],
         config['bounds']['step'],
@@ -158,6 +173,9 @@ def loadConfig(configFile):
         config['stop'].getboolean('close'),
         config['stop']['time'],
         config['exchange']['name'],
-        environ['apiKey'],
-        environ['secret'],
+        # Replace these with INI settings on first release
+        environ['exchange.apikey'],
+        environ['exchange.secret'],
+        environ['telegram.bottoken'],
+        environ['telegram.chatid'],
     )

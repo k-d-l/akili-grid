@@ -70,6 +70,11 @@ def main():
         if (datetime.datetime.now() - startTime).total_seconds() > CONFIG.stop.time:
             break
 
+        #TODO: This can be optimised by getting all open orders from the exchange in one call before
+        # executing the loop instead of calling the exchange to check for each order. But for now, this works.
+
+        #TODO: Also need to think of a better way to handle high frequency grids, if several orders have been filled
+        # as price falls this will work, but not as it goes up
         for gridIndex in range(0, len(gridList)):
             if grid[gridList[gridIndex]] is not None:
                 # Check if order is still alive
