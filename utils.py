@@ -2,7 +2,6 @@ import datetime
 from requests import get
 from urllib import parse
 from config import CONFIG
-from os import environ
 
 
 def log(msg):
