@@ -8,6 +8,9 @@ from ccxt import exchanges
 # This script loads the ini file specified and checks if all options are set and of the right type and
 # makes logical sense. It also outputs a nice config class that is easier to work with
 
+# Main (and only) config class instance
+CONFIG = None
+
 #TODO: Replace all raise with decent messages (possibly multi language capable)
 
 class Telegram:
@@ -147,11 +150,13 @@ class Config:
 
 
 def loadConfig(configFile):
+    global CONFIG
+
     config = ConfigParser()
     log(f'Using strategy {configFile}')
     config.read(configFile)
 
-    return Config(
+    CONFIG = Config(
         config['orders']['above'],
         config['orders']['below'],
         config['orders']['size'],

@@ -3,16 +3,17 @@ import ccxt
 import datetime
 from decimal import Decimal
 
-from config import loadConfig
+from config import loadConfig, CONFIG
 from utils import log
 
-
 def main():
+
+    loadConfig(sys.argv[1])
 
     startTime = datetime.datetime.now()
     log(f'Start time {startTime.isoformat()}')
     log('Loading strategy')
-    CONFIG = loadConfig(sys.argv[1])
+    
 
     log('Connecting to exchange')
     xchange = ccxt.ftx({
