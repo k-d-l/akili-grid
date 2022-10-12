@@ -275,3 +275,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/osx,windows,linux,python,virtualenv,venv,visualstudiocode
+
+# akiligrid specific ignores
+# ignore user strategy folder
+strategies/
