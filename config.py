@@ -1,7 +1,6 @@
 from configparser import ConfigParser
 from decimal import Decimal
 from os import environ
-from utils import log
 
 from ccxt import exchanges
 
@@ -153,7 +152,6 @@ def loadConfig(configFile):
     global CONFIG
 
     config = ConfigParser()
-    log(f'Using strategy {configFile}')
     config.read(configFile)
 
     CONFIG = Config(
