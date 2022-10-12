@@ -1,16 +1,11 @@
-import sys
 import ccxt
 import datetime
 from decimal import Decimal
 
-from config import loadConfig, CONFIG
+from config import CONFIG
 from utils import log
 
 def main():
-
-    loadConfig(sys.argv[1])
-    log('Script start.')
-
     startTime = datetime.datetime.now()
     log(f'Start time {startTime.isoformat()}')
     log('Loading strategy')
@@ -120,7 +115,9 @@ def main():
         price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
     log("Exiting main loop let's find out why.")
     #TODO: Finish the app 😁
-    log('Script end.')
+
 
 if __name__ == "__main__":
+    log('Script start.')
     main()
+    log('Script end.')

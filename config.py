@@ -1,14 +1,12 @@
 from configparser import ConfigParser
 from decimal import Decimal
 from os import environ
+import sys
 
 from ccxt import exchanges
 
 # This script loads the ini file specified and checks if all options are set and of the right type and
 # makes logical sense. It also outputs a nice config class that is easier to work with
-
-# Main (and only) config class instance
-CONFIG = None
 
 #TODO: Replace all raise with decent messages (possibly multi language capable)
 
@@ -148,37 +146,34 @@ class Config:
         self.telegram = Telegram(telegramBotToken, telegramChatID)
 
 
-def loadConfig(configFile):
-    global CONFIG
+config = ConfigParser()
+config.read(sys.argv[1])
 
-    config = ConfigParser()
-    config.read(configFile)
-
-    CONFIG = Config(
-        config['orders']['above'],
-        config['orders']['below'],
-        config['orders']['size'],
-        config['type']['above'],
-        config['type']['below'],
-        config['type']['leverage'],
-        config['type']['market'],
-        config['type']['name'],
-        config['bounds']['high'],
-        config['bounds']['low'],
-        config['bounds']['step'],
-        config['start']['low'],
-        config['start']['high'],
-        config['start']['amount'],
-        config['start']['order'],
-        config['start']['location'],
-        config['stop']['low'],
-        config['stop']['high'],
-        config['stop'].getboolean('close'),
-        config['stop']['time'],
-        config['exchange']['name'],
-        # Replace these with INI settings on first release
-        environ['exchange.apikey'],
-        environ['exchange.secret'],
-        environ['telegram.bottoken'],
-        environ['telegram.chatid'],
+CONFIG = Config(
+    config['orders']['above'],
+    config['orders']['below'],
+    config['orders']['size'],
+    config['type']['above'],
+    config['type']['below'],
+    config['type']['leverage'],
+    config['type']['market'],
+    config['type']['name'],
+    config['bounds']['high'],
+    config['bounds']['low'],
+    config['bounds']['step'],
+    config['start']['low'],
+    config['start']['high'],
+    config['start']['amount'],
+    config['start']['order'],
+    config['start']['location'],
+    config['stop']['low'],
+    config['stop']['high'],
+    config['stop'].getboolean('close'),
+    config['stop']['time'],
+    config['exchange']['name'],
+    # Replace these with INI settings on first release
+    environ['exchange.apikey'],
+    environ['exchange.secret'],
+    environ['telegram.bottoken'],
+    environ['telegram.chatid'],
     )
