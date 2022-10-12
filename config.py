@@ -147,7 +147,7 @@ class Config:
 
 
 config = ConfigParser()
-config.read(sys.argv[1])
+config.read(f'strategy/'{sys.argv[2]}'/strategy.ini')
 
 CONFIG = Config(
     config['orders']['above'],
