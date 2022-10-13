@@ -146,34 +146,37 @@ class Config:
         self.telegram = Telegram(telegramBotToken, telegramChatID)
 
 
-config = ConfigParser()
-config.read(f'strategy/'{sys.argv[2]}'/strategy.ini')
+if len(sys.argv) < 2:
+    CONFIG = None
+else:
+    config = ConfigParser()
+    config.read(f'strategies/{sys.argv[2]}/strategy.ini')
 
-CONFIG = Config(
-    config['orders']['above'],
-    config['orders']['below'],
-    config['orders']['size'],
-    config['type']['above'],
-    config['type']['below'],
-    config['type']['leverage'],
-    config['type']['market'],
-    config['type']['name'],
-    config['bounds']['high'],
-    config['bounds']['low'],
-    config['bounds']['step'],
-    config['start']['low'],
-    config['start']['high'],
-    config['start']['amount'],
-    config['start']['order'],
-    config['start']['location'],
-    config['stop']['low'],
-    config['stop']['high'],
-    config['stop'].getboolean('close'),
-    config['stop']['time'],
-    config['exchange']['name'],
-    # Replace these with INI settings on first release
-    environ['exchange.apikey'],
-    environ['exchange.secret'],
-    environ['telegram.bottoken'],
-    environ['telegram.chatid'],
-    )
+    CONFIG = Config(
+        config['orders']['above'],
+        config['orders']['below'],
+        config['orders']['size'],
+        config['type']['above'],
+        config['type']['below'],
+        config['type']['leverage'],
+        config['type']['market'],
+        config['type']['name'],
+        config['bounds']['high'],
+        config['bounds']['low'],
+        config['bounds']['step'],
+        config['start']['low'],
+        config['start']['high'],
+        config['start']['amount'],
+        config['start']['order'],
+        config['start']['location'],
+        config['stop']['low'],
+        config['stop']['high'],
+        config['stop'].getboolean('close'),
+        config['stop']['time'],
+        config['exchange']['name'],
+        # Replace these with INI settings on first release
+        environ['exchange.apikey'] if 'exchange.apikey' in environ else config['exchange']['apikey'],
+        environ['exchange.secret'] if 'exchange.secret' in environ else config['exchange']['secret'],
+        environ['telegram.bottoken'] if 'telegram.bottoken' in environ else config['telegram']['bottoken'],
+        environ['telegram.chatid'] if 'telegram.chatid' in environ else config['telegram']['chatid'],
+        )

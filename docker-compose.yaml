@@ -1,6 +1,7 @@
 services:
   akiligrid:
     build: https://github.com/jangita/akiligrid.git#main
+    # build: .
     container_name: akiligrid
     volumes:
       - ./strategies:/app/strategies

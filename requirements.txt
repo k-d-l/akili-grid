@@ -1,1 +1,2 @@
 ccxt==1.94.3
+python-slugify==6.1.2
