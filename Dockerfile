@@ -5,5 +5,5 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ['python', 'main.py']
+ENTRYPOINT ['/usr/local/bin/python', 'main.py']
 CMD ['help']
