@@ -1,1 +1,0 @@
-@docker compose run akiligrid --rm %*

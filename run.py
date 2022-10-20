@@ -5,7 +5,7 @@ from decimal import Decimal
 from config import CONFIG
 from utils import log
 
-def run():
+def main():
     startTime = datetime.datetime.now()
     log(f'Start time {startTime.isoformat()}')
     log('Loading strategy')
@@ -58,7 +58,7 @@ def run():
     log('Starting main loop.')
     # I use while true and several separate exit conditions because the boolean logic
     # becomes a headache: There are too many exit conditions to concot one massive while clause        
-    while True: 
+    while True:
 
         # EXIT Conditions
         if price < CONFIG.stop.low or price > CONFIG.stop.high:
@@ -115,3 +115,7 @@ def run():
         price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
     log("Exiting main loop let's find out why.")
     #TODO: Finish the app 😁
+
+
+    if __name__ == "__main__":
+        main()

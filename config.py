@@ -150,7 +150,7 @@ if len(sys.argv) < 2:
     CONFIG = None
 else:
     config = ConfigParser()
-    config.read(f'strategies/{sys.argv[2]}/strategy.ini')
+    config.read(f'strategies/{sys.argv[1]}/strategy.ini')
 
     CONFIG = Config(
         config['orders']['above'],

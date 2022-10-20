@@ -5,14 +5,10 @@ import shutil
 from sys import argv
 from slugify import slugify
 
-def create():
-    if argv[2] == 'help':
-        print('''
-        create help : Show this help.
-        create mystrategy : Create new named mystrategy.
-        ''')
-        return
-
-    strategyDIR = slugify(argv[2])
+def main():
+    strategyDIR = slugify(argv[1])
     os.makedirs(f'strategies/{strategyDIR}')
     shutil.copyfile('strategy.ini', f'strategies/{strategyDIR}/strategy.ini')
+
+if __name__ == "__main__":
+    main()
