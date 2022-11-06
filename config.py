@@ -48,7 +48,7 @@ class Stop:
 
 
 class Start:
-    def __init__(self, low, high, amount, order, location):
+    def __init__(self, low, high, amount, order, location, shift):
         self.low = Decimal(low)
         if self.low < 0:
             raise
@@ -72,6 +72,9 @@ class Start:
         if self.location not in {'above', 'below'}:
             raise
 
+        self.location_shift = Decimal(shift)
+        if self.location_shift <0:
+            raise
 
 class Bounds:
     def __init__(self, high, low, step):
@@ -104,7 +107,7 @@ class Orders:
 
 
 class Type:
-    def __init__(self, above, below, leverage, market, name):
+    def __init__(self, above, below, leverage, market, name, direction):
         self.above = above
         if self.above not in {'buy', 'sell'}:
             raise
@@ -124,23 +127,27 @@ class Type:
         self.name = name
         if name == '':
             raise
+        
+        self.direction = direction
+        if self.direction not in {'short', 'long'}:
+            raise
 
 
 class Config:
     def __init__(
         self,
         orderAbove, orderBelow, orderSize,
-        typeAbove, typeBelow, typeLeverage, typeMarket, typeName,
+        typeAbove, typeBelow, typeLeverage, typeMarket, typeName, typeDirection,
         boundsHigh, boundsLow, boundsStep,
-        startLow, startHigh, startAmount, startOrder, startLocation,
+        startLow, startHigh, startAmount, startOrder, startLocation, startLocationShift,
         stopLow, stopHigh, stopClose, stopTime,
         exchangeName, exchangeKey, exchangeSecret,
         telegramBotToken, telegramChatID,
     ):
         self.orders = Orders(orderAbove, orderBelow, orderSize)
-        self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket, typeName)
+        self.type = Type(typeAbove, typeBelow, typeLeverage, typeMarket, typeName, typeDirection)
         self.bounds = Bounds(boundsHigh, boundsLow, boundsStep)
-        self.start = Start(startLow, startHigh, startAmount, startOrder, startLocation)
+        self.start = Start(startLow, startHigh, startAmount, startOrder, startLocation, startLocationShift)
         self.stop = Stop(stopLow, stopHigh, stopClose, stopTime)
         self.exchange = Exchange(exchangeName, exchangeKey, exchangeSecret)
         self.telegram = Telegram(telegramBotToken, telegramChatID)
@@ -161,6 +168,7 @@ else:
         config['type']['leverage'],
         config['type']['market'],
         config['type']['name'],
+        config['type']['direction'],
         config['bounds']['high'],
         config['bounds']['low'],
         config['bounds']['step'],
@@ -169,6 +177,7 @@ else:
         config['start']['amount'],
         config['start']['order'],
         config['start']['location'],
+        config['start']['location_shift'],
         config['stop']['low'],
         config['stop']['high'],
         config['stop'].getboolean('close'),
@@ -180,3 +189,4 @@ else:
         environ['telegram.bottoken'] if 'telegram.bottoken' in environ else config['telegram']['bottoken'],
         environ['telegram.chatid'] if 'telegram.chatid' in environ else config['telegram']['chatid'],
         )
+
