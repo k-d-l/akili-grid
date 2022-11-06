@@ -4,54 +4,107 @@ from decimal import Decimal
 
 from config import CONFIG
 from utils import log
+import time
+import sys
 
 def main():
-    startTime = datetime.datetime.now()
-    log(f'Start time {startTime.isoformat()}')
-    log('Loading strategy')
+    def get_price(exchange, market, price = -1):
+        if price == -1:
+            price = exchange.fetch_ticker(market)['last']
+        return Decimal(exchange.price_to_precision(market,price))
     
-
+    startTime = datetime.datetime.now()
+    
+    log(f'Start time {startTime.isoformat()}')
     log('Connecting to exchange')
     xchange = ccxt.ftx({
         'apiKey': CONFIG.exchange.key,
         'secret': CONFIG.exchange.secret,
     })
+    xchange.headers = {
+        'FTX-SUBACCOUNT': 'Sub_1',
+    }
+    
+    pair = CONFIG.type.market;
+    
+#     price = get_price(xchange, pair)
+#     log(f'Base price is {price}. Waiting for start price.')
+#     while not(price > CONFIG.start.low and price < CONFIG.start.high):
+#         price = get_price(xchange, pair)
 
-    log('Fetching ticker.')
-    price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
-
-    # Wait for start trigger
-    log(f'Base price is {price}. Waiting for start price.')
-    while price > CONFIG.start.low and price < CONFIG.start.high:
-        price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
-
-    log('Building grid and placing first order.')
-    log(f'Start price hit at {price}')
+    #loops to start grid (3 attempts by 300s (10*30) diff < 0.07 else podtyazhka) 
+    for i in range(3):
+        #fetch current price
+        price = get_price(xchange, pair)
+        log(f'Loop ({i}): Current {CONFIG.type.market} price at {price}')
+        
+        #starting order
+        if CONFIG.type.direction == 'long':
+            gridPrice = get_price(xchange, pair, price*(1-CONFIG.start.location_shift/100))
+        else:
+            gridPrice = get_price(xchange, pair, price*(1+CONFIG.start.location_shift/100))
+        
+        amount = xchange.amount_to_precision(pair, CONFIG.start.amount)
+        
+        log(f'Loop ({i}): Placing start {CONFIG.type.direction} order {CONFIG.start.amount}@{gridPrice}')
+        
+        if CONFIG.type.direction == 'long':
+            order_id = xchange.createLimitBuyOrder(pair, amount, gridPrice)['id']
+        if CONFIG.type.direction == 'short':
+            order_id = xchange.createLimitSellOrder(pair, amount, gridPrice)['id']
+     
+        get_in = False
+        
+        delay_before_podtyazhka = 2#in loops ()
+        for j in range(10):# 10 loops by 30s = 300s with one price
+            price = get_price(xchange, pair)
+            priceDiff = abs(100*(gridPrice - price)/price)
+            status = xchange.fetch_order(order_id)['status']
+            log(f'Loop ({i}): Oreder:{order_id} Diff:{priceDiff:1.5} status:{status}')  
+            if status=='closed':
+                log(f'Loop ({i}): Oreder:{order_id} !!!Was closed')
+                get_in = True
+                break
+            if status=='canceled':
+                log(f'Loop ({i}): Oreder:{order_id} !!!Order canceled')
+                break
+            if priceDiff>0.5:
+                if delay_before_podtyazhka:
+                    delay_before_podtyazhka -= 1
+                    log(f'Loop ({i}): Oreder:{order_id} Diff:{priceDiff:1.5} !!!Delay before podtyazhka #{delay_before_podtyazhka}')   
+                else:
+                    log(f'Loop ({i}): Oreder:{order_id} Diff:{priceDiff:1.5} !!!Подтяжка')
+                    break         
+            time.sleep(30)
+        log(f'Next Loop.')
+        if (not get_in):
+            while xchange.fetch_order(order_id)['status'] in ['open']:
+                xchange.cancel_order(order_id)
+                time.sleep(1)
+        else:
+            break
+     
+     
+    if  (not get_in):
+        log("We're out")
+        sys.exit(0)
+        
+    else:
+        log("We're in")
+        sys.exit(0)
+    
+    
+    
+    #empty grid
     grid = {}
-    gridPrice = CONFIG.bounds.low
+    #list of prices
     gridList = [gridPrice]
-    while gridPrice <= CONFIG.bounds.high:
-        grid[gridPrice] = None
-        priceDiff = gridPrice - price
-        if abs(priceDiff) < CONFIG.bounds.step:
-            if priceDiff > 0 and CONFIG.start.location == 'above':
-                # gridPrice is above current price. Place above order
-                log(f'Placing start {CONFIG.start.order} order at {gridPrice} {CONFIG.start.location} {price}')
-                if CONFIG.start.order == 'buy':
-                    grid[gridPrice] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
-                if CONFIG.start.order == 'sell':
-                    grid[gridPrice] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
-
-            if priceDiff < 0 and CONFIG.start.location == 'below':
-                # gridPrice is below current price place below order
-                log(f'Placing start {CONFIG.start.order} order at {gridPrice} {CONFIG.start.location} {price}')
-                if CONFIG.start.order == 'buy':
-                    grid[gridPrice] = xchange.createLimitBuyOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
-                if CONFIG.start.order == 'sell':
-                    grid[gridPrice] = xchange.createLimitSellOrder(CONFIG.type.market, CONFIG.start.amount, gridPrice)['id']
-
-        gridList += [gridPrice]
-        gridPrice += CONFIG.bounds.step
+    #order is none on that price
+    grid[gridPrice] = None 
+    
+    
+    gridList += [gridPrice]
+    gridPrice += CONFIG.bounds.step
 
     # Main loop
     price = Decimal(xchange.fetch_ticker(CONFIG.type.market)['last'])
@@ -75,6 +128,7 @@ def main():
         for gridIndex in range(0, len(gridList)):
             if grid[gridList[gridIndex]] is not None:
                 # Check if order is still alive
+                print(grid[gridList[gridIndex]],xchange.fetch_order(grid[gridList[gridIndex]])['status'])
                 if xchange.fetch_order(grid[gridList[gridIndex]])['status'] == 'closed':
                     # Order has been closed. Mark as closed
                     log(f'Order at {gridList[gridIndex]} filled.')
@@ -117,5 +171,5 @@ def main():
     #TODO: Finish the app 😁
 
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()
